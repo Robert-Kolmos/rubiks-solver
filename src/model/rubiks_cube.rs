@@ -206,7 +206,6 @@ fn write_single_face(
 impl <'a> Display for RubiksCube<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         let mut faces = Vec::new();
-        // TODO print in the orange peel format rather than a vertical column
         for color in ALL_COLORS {
             faces.push(self.get_face(color));
         }
