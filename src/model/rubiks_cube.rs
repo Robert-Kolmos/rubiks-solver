@@ -20,8 +20,8 @@ const ADJACENT_COLORS: [[&'static Color; NUM_NEIGHBORS]; NUM_COLORS] = [
 ];
 
 /// Constructs and returns an array such that for two colors a and b, iff arr[a.idx] == Some(b) then
-/// a rotates to b in the rotation specified by face and direction. The index of the color opposite
-/// face will be None in the resulting array.
+/// a rotates to b in the specified rotation. The index of the color opposite face will be None in
+/// the resulting array.
 fn get_color_rotations(rotation: Rotation) -> [Option<&'static Color>; NUM_COLORS] {
     let face = rotation.face;
     let adjacent = ADJACENT_COLORS[face.idx];
