@@ -33,7 +33,7 @@ impl <'a> Block<'a> {
     /// face.
     pub fn get_face(&self, face: &Color) -> Option<&Color> {
         let colors = match self {
-            Block::Middle(a) => vec![],
+            Block::Middle(_) => return None,
             Block::Edge(a, b) => vec![a, b] ,
             Block::Corner(a, b, c) => vec![a, b, c]
         };

@@ -4,7 +4,7 @@ use std::result::Result;
 
 use super::color::{Color, WHITE, RED, BLUE, ORANGE, GREEN, YELLOW, NUM_COLORS, ALL_COLORS};
 use super::rotation::{Rotation, Direction};
-use super::block::{Block, BlockFace};
+use super::block::Block;
 
 const NUM_NEIGHBORS: usize = 4;
 const SIDE_LEN: usize = 3;
