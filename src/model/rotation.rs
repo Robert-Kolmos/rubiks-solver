@@ -6,7 +6,7 @@ pub enum Direction {
     CounterClockwise = 1,
 }
 
-pub struct Rotation<'a> {
-    pub face: &'a Color,
+pub struct Rotation {
+    pub face: &'static Color,
     pub direction: Direction,
 }

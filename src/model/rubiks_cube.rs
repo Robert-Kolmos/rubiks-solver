@@ -9,7 +9,7 @@ use super::block::{Block, BlockFace};
 const NUM_NEIGHBORS: usize = 4;
 
 // Stored in the order Top, Right, Bottom, Left. 
-const ADJACENT_COLORS: [[&Color; NUM_NEIGHBORS]; NUM_COLORS] = [
+const ADJACENT_COLORS: [[&'static Color; NUM_NEIGHBORS]; NUM_COLORS] = [
     [&GREEN, &ORANGE, &BLUE, &RED], // White
     [&WHITE, &BLUE, &YELLOW, &GREEN], // Red
     [&WHITE, &ORANGE, &YELLOW, &RED], // Blue
@@ -21,14 +21,16 @@ const ADJACENT_COLORS: [[&Color; NUM_NEIGHBORS]; NUM_COLORS] = [
 /// Constructs and returns an array such that for two colors a and b, iff arr[a.idx] == Some(b) then
 /// a rotates to b in the rotation specified by face and direction. The index of the color opposite
 /// face will be None in the resulting array.
-fn get_color_rotations(rotation: Rotation) -> [Option<&Color>; NUM_COLORS] {
+fn get_color_rotations(rotation: Rotation) -> [Option<&'static Color>; NUM_COLORS] {
     let face = rotation.face;
     let adjacent = ADJACENT_COLORS[face.idx];
-    let faces_in_order = match rotation.direction {
+    let faces_in_order: [&'static Color; NUM_NEIGHBORS] = match rotation.direction {
         Direction::Clockwise => adjacent,
         Direction::CounterClockwise => {
-            let mut result = adjacent.clone();
-            result.reverse();
+            let mut result = [ &WHITE; NUM_NEIGHBORS ];
+            for i in NUM_NEIGHBORS-1..=0 {
+                result[NUM_NEIGHBORS - i - 1] = adjacent[i];
+            }
             result
         },
     };
@@ -47,8 +49,6 @@ pub struct RubiksCube<'a> {
     blocks: [Block<'a>; 26]
 }
 
-
-// TODO move all of this to it's own module.
 impl <'a> RubiksCube<'a> {
     pub fn solved() -> Self {
         const DEFAULT: Block = Block::Middle(&WHITE);
@@ -95,15 +95,14 @@ impl <'a> RubiksCube<'a> {
 
             match block {
                 Block::Middle(_) => (),
-                // TODO avoid constructing a new ColorPointer instead just mutate .face.
                 Block::Edge(ref mut a, ref mut b) => {
-                    *a = BlockFace  { color: a.color, face: ALL_COLORS[rotations[a.face.idx].unwrap().idx] };
-                    *b = BlockFace { color: b.color, face: ALL_COLORS[rotations[b.face.idx].unwrap().idx] };
+                    a.face = rotations[a.face.idx].unwrap();
+                    b.face = rotations[b.face.idx].unwrap();
                 },
                 Block::Corner(ref mut a, ref mut b, ref mut c) => {
-                    *a = BlockFace  { color: a.color, face: ALL_COLORS[rotations[a.face.idx].unwrap().idx] };
-                    *b = BlockFace { color: b.color, face: ALL_COLORS[rotations[b.face.idx].unwrap().idx] };
-                    *c = BlockFace { color: c.color, face: ALL_COLORS[rotations[c.face.idx].unwrap().idx] };
+                    a.face = rotations[a.face.idx].unwrap();
+                    b.face = rotations[b.face.idx].unwrap();
+                    c.face = rotations[c.face.idx].unwrap();
                 },
             }
         }
