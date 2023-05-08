@@ -1,11 +1,9 @@
 pub mod model;
 
-use model::color::{WHITE, RED, ALL_COLORS};
+use model::color::ALL_COLORS;
 use model::rubiks_cube::RubiksCube;
 use model::rotation::{Rotation, Direction};
 use rand::Rng;
-
-use crate::model::rotation;
 
 fn get_random_rotation() -> Rotation {
     let mut rng = rand::thread_rng();
