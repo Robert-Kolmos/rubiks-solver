@@ -23,11 +23,13 @@ fn main() {
     println!("Initial");
     println!("{}", solved);
 
-    for i in 0..10 {
+    for _ in 0..40 {
         let rotation = get_random_rotation();
         println!("Turned {}", rotation);
         solved.turn(rotation);
     }
 
+    println!();
     println!("{}", solved);
 }
+
