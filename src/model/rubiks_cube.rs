@@ -7,6 +7,7 @@ use super::rotation::{Rotation, Direction};
 use super::block::{Block, BlockFace};
 
 const NUM_NEIGHBORS: usize = 4;
+const SIDE_LEN: usize = 3;
 
 // Stored in the order Top, Right, Bottom, Left. 
 const ADJACENT_COLORS: [[&'static Color; NUM_NEIGHBORS]; NUM_COLORS] = [
@@ -28,8 +29,8 @@ fn get_color_rotations(rotation: Rotation) -> [Option<&'static Color>; NUM_COLOR
         Direction::Clockwise => adjacent,
         Direction::CounterClockwise => {
             let mut result = [ &WHITE; NUM_NEIGHBORS ];
-            for i in NUM_NEIGHBORS-1..=0 {
-                result[NUM_NEIGHBORS - i - 1] = adjacent[i];
+            for i in 0..NUM_NEIGHBORS {
+                result[i] = adjacent[NUM_NEIGHBORS - i - 1];
             }
             result
         },
@@ -146,7 +147,7 @@ impl <'a> RubiksCube<'a> {
         None
     }
 
-    fn write_face(&self, face: &Color, f: &mut Formatter<'_>) -> Result<(), Error> {
+    fn get_face(&self, face: &Color) -> [[&str; SIDE_LEN]; SIDE_LEN] {
         let neighbors = ADJACENT_COLORS[face.idx];
         
         // TODO rewrite this to be more maintainable.
@@ -159,17 +160,71 @@ impl <'a> RubiksCube<'a> {
         let bottom_middle = self.find_edge(face, neighbors[2]).unwrap().get_face(face).unwrap().abrv;
         let bottom_right = self.find_corner(face, neighbors[2], neighbors[1]).unwrap().get_face(face).unwrap().abrv;
         
-        return write!(f, "{} {} {}\n{} {} {}\n{} {} {}", top_left, top_middle, top_right, left_middle, face.abrv, right_middle, bottom_left, bottom_middle, bottom_right);
+        return [
+            [top_left, top_middle, top_right],
+            [left_middle, face.abrv, right_middle],
+            [bottom_left, bottom_middle, bottom_right]
+        ];
     }
+}
+
+fn write_face_row(
+    face: &[[&str; SIDE_LEN]; SIDE_LEN],
+    row: usize, f: &mut Formatter<'_>
+) -> Result<(), Error> {
+    write!(f, "| {} {} {} |", face[row][0], face[row][1], face[row][2])
+}
+
+fn write_multiple_face_rows(
+    faces: &Vec<[[&str; SIDE_LEN]; SIDE_LEN]>, 
+    row: usize, f: &mut Formatter<'_>
+) -> Result<(), Error> {
+    for face in faces {
+        write_face_row(face, row, f)?;
+    }
+    writeln!(f, "")?;
+    Ok(())
+}
+
+fn write_single_face(
+    face: &[[&str; SIDE_LEN]; SIDE_LEN], 
+    left_pad: &str, 
+    f: &mut Formatter<'_>
+) -> Result<(), Error> {
+    write!  (f, "{}", left_pad)?;
+    write_face_row(face, 0, f)?;
+    writeln!(f, "")?;
+    write!  (f, "{}", left_pad)?;
+    write_face_row(face, 1, f)?;
+    writeln!(f, "")?;
+    write!  (f, "{}", left_pad)?;
+    write_face_row(face, 2, f)?;
+    writeln!(f, "")?;
+    Ok(())
 }
 
 impl <'a> Display for RubiksCube<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        let mut faces = Vec::new();
         // TODO print in the orange peel format rather than a vertical column
         for color in ALL_COLORS {
-            self.write_face(color, f)?;
-            write!(f, "\n")?;
+            faces.push(self.get_face(color));
         }
+
+        let blank = "         ";
+        let dash = "---------";
+
+        writeln!(f, "{}{}", blank, dash)?;
+        write_single_face(&faces[0], blank, f)?;
+        writeln!(f, "{}{}{}{}", dash, dash, dash, dash)?;
+        let middle_faces = vec! [faces[1], faces[2], faces[3], faces[4]];
+        write_multiple_face_rows(&middle_faces, 0, f)?;
+        write_multiple_face_rows(&middle_faces, 1, f)?;
+        write_multiple_face_rows(&middle_faces, 2, f)?;
+        writeln!(f, "{}{}{}{}", dash, dash, dash, dash)?;
+        write_single_face(&faces[5], blank, f)?;
+        writeln!(f, "{}{}", blank, dash)?;
+
         Ok(())
     }
 }
