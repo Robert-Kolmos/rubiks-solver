@@ -2,12 +2,15 @@ use super::color::Color;
 
 /// Represents a single face of a Block which has it's own color and a pointer to the face that
 /// color is on.
+#[derive(Clone)]
 pub struct BlockFace<'a> {
     pub color: &'a Color,
     pub face: &'a Color,
 }
 
+
 /// Represents a single piece of the larger rubiks cube.
+#[derive(Clone)]
 pub enum Block<'a> {
     Middle(&'a Color),
     Edge(BlockFace<'a>, BlockFace<'a>),

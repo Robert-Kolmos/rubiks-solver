@@ -1,4 +1,3 @@
-use std::collections::{HashSet};
 use std::fmt::{Display, Formatter, Error};
 use std::result::Result;
 
@@ -45,7 +44,7 @@ fn get_color_rotations(rotation: Rotation) -> [Option<&'static Color>; NUM_COLOR
     result
 }
 
-
+#[derive(Clone)]
 pub struct RubiksCube<'a> {
     blocks: [Block<'a>; 26]
 }
@@ -109,12 +108,15 @@ impl <'a> RubiksCube<'a> {
         }
     }
 
-    fn find_edge(&self, a: &Color, b: &Color) -> Option<&Block> {
+    /// Finds the block that resides between the faces in colors.
+    fn find_edge(&self, colors: &[&Color; 2]) -> Option<&Block> {
         for block in self.blocks.iter() {
             match block {
                 Block::Middle(_) => (),
                 Block::Edge(i, j) => {
-                    if (i.face == a || i.face == b) && (j.face == a || j.face == b) {
+                    let matches = colors.iter()
+                        .all(|color| *color == i.face || *color == j.face);
+                    if matches {
                         return Some(block);
                     }
                 },
@@ -125,19 +127,17 @@ impl <'a> RubiksCube<'a> {
         None
     }
 
-    fn find_corner(&self, a: &Color, b: &Color, c: &Color) -> Option<&Block> {
-        // TODO find a way to do this that doesn't allocate a set every time.
-        let mut colors = HashSet::new();
-        colors.insert(a);
-        colors.insert(b);
-        colors.insert(c);
 
+    /// Finds the block that resides between the faces in colors.
+    fn find_corner(&self, colors: &[&Color; 3]) -> Option<&Block> {
         for block in self.blocks.iter() {
             match block {
                 Block::Middle(_) => (),
                 Block::Edge(_, _) => (),
                 Block::Corner(i, j, k) => {
-                    if colors.contains(i.face) && colors.contains(j.face) && colors.contains(k.face) {
+                    let matches = colors.iter()
+                        .all(|color| *color == i.face || *color == j.face || *color == k.face);
+                    if matches {
                         return Some(block);
                     }
                 }
@@ -147,24 +147,23 @@ impl <'a> RubiksCube<'a> {
         None
     }
 
-    fn get_face(&self, face: &Color) -> [[&str; SIDE_LEN]; SIDE_LEN] {
+    fn get_face(&self, face: &Color) -> Option<[[&str; SIDE_LEN]; SIDE_LEN]> {
         let neighbors = ADJACENT_COLORS[face.idx];
         
-        // TODO rewrite this to be more maintainable.
-        let top_left = self.find_corner(face, neighbors[0], neighbors[3]).unwrap().get_face(face).unwrap().abrv;
-        let top_middle = self.find_edge(face, neighbors[0]).unwrap().get_face(face).unwrap().abrv;
-        let top_right = self.find_corner(face, neighbors[0], neighbors[1]).unwrap().get_face(face).unwrap().abrv;
-        let left_middle = self.find_edge(face, neighbors[3]).unwrap().get_face(face).unwrap().abrv;
-        let right_middle = self.find_edge(face, neighbors[1]).unwrap().get_face(face).unwrap().abrv;
-        let bottom_left = self.find_corner(face, neighbors[3], neighbors[2]).unwrap().get_face(face).unwrap().abrv;
-        let bottom_middle = self.find_edge(face, neighbors[2]).unwrap().get_face(face).unwrap().abrv;
-        let bottom_right = self.find_corner(face, neighbors[2], neighbors[1]).unwrap().get_face(face).unwrap().abrv;
-        
-        return [
-            [top_left, top_middle, top_right],
-            [left_middle, face.abrv, right_middle],
-            [bottom_left, bottom_middle, bottom_right]
-        ];
+        let mut result = [["X"; SIDE_LEN]; SIDE_LEN];
+
+        // Both edge and corner indexes go Top, Right, Bottom, Left
+        let edge_indexes = [(0, 1), (1, 2), (2, 1), (1, 0)];
+        let corner_indexes = [(0, 2), (2, 2), (2, 0), (0, 0)];
+        for i in 0..NUM_NEIGHBORS {
+            let edge = self.find_edge(&[face, neighbors[i]])?;
+            result[edge_indexes[i].0][edge_indexes[i].1] = edge.get_face(face)?.abrv;
+            let corner = self.find_corner(&[face, neighbors[i], neighbors[(i + 1) % NUM_NEIGHBORS]])?;
+            result[corner_indexes[i].0][corner_indexes[i].1] = corner.get_face(face)?.abrv;
+        }
+        result[1][1] = face.abrv;
+
+        Some(result)
     }
 }
 
@@ -207,7 +206,7 @@ impl <'a> Display for RubiksCube<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         let mut faces = Vec::new();
         for color in ALL_COLORS {
-            faces.push(self.get_face(color));
+            faces.push(self.get_face(color).unwrap());
         }
 
         let blank = "         ";
