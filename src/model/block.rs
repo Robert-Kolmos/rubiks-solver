@@ -8,7 +8,6 @@ pub struct BlockFace<'a> {
     pub face: &'a Color,
 }
 
-
 /// Represents a single piece of the larger rubiks cube.
 #[derive(Clone)]
 pub enum Block<'a> {
