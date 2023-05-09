@@ -3,6 +3,7 @@ use std::result::Result;
 
 use rand::Rng;
 
+use super::block::BlockFace;
 use super::color::{Color, WHITE, RED, BLUE, ORANGE, GREEN, YELLOW, NUM_COLORS, ALL_COLORS};
 use super::rotation::{Rotation, Direction};
 use super::block::Block;
@@ -48,19 +49,15 @@ fn get_color_rotations(rotation: &Rotation) -> [Option<&'static Color>; NUM_COLO
 
 #[derive(Clone)]
 pub struct RubiksCube<'a> {
-    blocks: [Block<'a>; 26]
+    blocks: [Block<'a>; 20]
 }
 
 impl <'a> RubiksCube<'a> {
     pub fn solved() -> Self {
-        const DEFAULT: Block = Block::Middle(&WHITE);
-        let mut blocks = [ DEFAULT; 26];
+        const DEFAULT_FACE: BlockFace = BlockFace { color: &BLUE, face: &BLUE };
+        const DEFAULT: Block = Block::Edge(DEFAULT_FACE, DEFAULT_FACE);
+        let mut blocks = [ DEFAULT; 20];
         let mut idx = 0;
-
-        for color in ALL_COLORS {
-            blocks[idx] = Block::Middle(color);
-            idx += 1;
-        }
 
         for color in [&WHITE, &YELLOW] {
             let neighbors = ADJACENT_COLORS[color.idx];
@@ -83,7 +80,7 @@ impl <'a> RubiksCube<'a> {
             }
         }
 
-        assert!(idx == 26);
+        assert!(idx == 20);
         Self { blocks: blocks }
     }
 
@@ -110,7 +107,6 @@ impl <'a> RubiksCube<'a> {
             }
 
             match block {
-                Block::Middle(_) => (),
                 Block::Edge(ref mut a, ref mut b) => {
                     a.face = rotations[a.face.idx].unwrap();
                     b.face = rotations[b.face.idx].unwrap();
@@ -128,7 +124,6 @@ impl <'a> RubiksCube<'a> {
     fn find_edge(&self, colors: &[&Color; 2]) -> Option<&Block> {
         for block in self.blocks.iter() {
             match block {
-                Block::Middle(_) => (),
                 Block::Edge(i, j) => {
                     let matches = colors.iter()
                         .all(|color| *color == i.face || *color == j.face);
@@ -148,7 +143,6 @@ impl <'a> RubiksCube<'a> {
     fn find_corner(&self, colors: &[&Color; 3]) -> Option<&Block> {
         for block in self.blocks.iter() {
             match block {
-                Block::Middle(_) => (),
                 Block::Edge(_, _) => (),
                 Block::Corner(i, j, k) => {
                     let matches = colors.iter()

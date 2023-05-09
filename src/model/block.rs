@@ -11,7 +11,6 @@ pub struct BlockFace<'a> {
 /// Represents a single piece of the larger rubiks cube.
 #[derive(Clone)]
 pub enum Block<'a> {
-    Middle(&'a Color),
     Edge(BlockFace<'a>, BlockFace<'a>),
     Corner(BlockFace<'a>, BlockFace<'a>, BlockFace<'a>)
 }
@@ -35,7 +34,6 @@ impl <'a> Block<'a> {
     /// face.
     pub fn get_face(&self, face: &Color) -> Option<&Color> {
         let colors = match self {
-            Block::Middle(_) => return None,
             Block::Edge(a, b) => vec![a, b] ,
             Block::Corner(a, b, c) => vec![a, b, c]
         };
