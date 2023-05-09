@@ -16,7 +16,6 @@ fn main() {
         println!("Turned {}", rotation);
     }
 
-
     println!();
     println!("After Scramble");
     println!("{}", solved);
