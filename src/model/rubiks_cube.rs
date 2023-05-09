@@ -1,6 +1,8 @@
 use std::fmt::{Display, Formatter, Error};
 use std::result::Result;
 
+use rand::Rng;
+
 use super::color::{Color, WHITE, RED, BLUE, ORANGE, GREEN, YELLOW, NUM_COLORS, ALL_COLORS};
 use super::rotation::{Rotation, Direction};
 use super::block::Block;
@@ -21,7 +23,7 @@ const ADJACENT_COLORS: [[&'static Color; NUM_NEIGHBORS]; NUM_COLORS] = [
 /// Constructs and returns an array such that for two colors a and b, iff arr[a.idx] == Some(b) then
 /// a rotates to b in the specified rotation. The index of the color opposite face will be None in
 /// the resulting array.
-fn get_color_rotations(rotation: Rotation) -> [Option<&'static Color>; NUM_COLORS] {
+fn get_color_rotations(rotation: &Rotation) -> [Option<&'static Color>; NUM_COLORS] {
     let face = rotation.face;
     let adjacent = ADJACENT_COLORS[face.idx];
     let faces_in_order: [&'static Color; NUM_NEIGHBORS] = match rotation.direction {
@@ -85,9 +87,23 @@ impl <'a> RubiksCube<'a> {
         Self { blocks: blocks }
     }
 
-    pub fn turn(&mut self, rotation: Rotation) {
+    /// Uses the provided Rng to generate random Rotations and executes them on self.
+    /// Returns a Vec of the rotations that were executed in order.
+    pub fn scramble(&mut self, rng: &mut impl Rng, n: usize) -> Vec<Rotation> {
+        let mut result = Vec::new();
+        for _ in 0..n {
+            let rotation = Rotation::random(rng);
+            self.turn(&rotation);
+            result.push(rotation);
+        }
+
+        result
+    }
+
+    /// Executes the specified rotation
+    pub fn turn(&mut self, rotation: &Rotation) {
         let face = rotation.face;
-        let rotations = get_color_rotations(rotation);
+        let rotations = get_color_rotations(&rotation);
         for block in self.blocks.iter_mut() {
             if block.get_face(face) == None {
                 continue;

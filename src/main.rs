@@ -1,21 +1,23 @@
 pub mod model;
 
 use model::rubiks_cube::RubiksCube;
-use model::rotation::Rotation;
 
 
 fn main() {
     let mut solved = RubiksCube::solved();
     println!("Initial");
     println!("{}", solved);
+    println!();
 
     let mut rng = rand::thread_rng();
-    for _ in 0..40 {
-        let rotation = Rotation::random(&mut rng);
+    let rotations = solved.scramble(&mut rng, 40);
+
+    for rotation in rotations {
         println!("Turned {}", rotation);
-        solved.turn(rotation);
     }
 
+
+    println!();
     println!("After Scramble");
     println!("{}", solved);
 }
