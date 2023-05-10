@@ -8,6 +8,12 @@ pub struct BlockFace<'a> {
     pub face: &'a Color,
 }
 
+impl <'a> BlockFace<'a> {
+    pub fn is_solved(&self) -> bool {
+        self.color == self.face
+    }
+}
+
 /// Represents a single piece of the larger rubiks cube.
 #[derive(Clone)]
 pub enum Block<'a> {
@@ -28,6 +34,15 @@ impl <'a> Block<'a> {
             BlockFace { color: b, face: b },
             BlockFace { color: c, face: c }
         )
+    }
+
+    pub fn is_solved(&self) -> bool {
+        match &self {
+            Block::Edge(a, b) =>
+                a.is_solved() && b.is_solved(),
+            Block::Corner(a, b, c) =>
+                a.is_solved() && b.is_solved() && c.is_solved()
+        }
     }
 
     /// Returns the color associated with specified face or None if self does not touch the specified

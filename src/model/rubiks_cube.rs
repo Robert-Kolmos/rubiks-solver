@@ -2,6 +2,7 @@ use std::fmt::{Display, Formatter, Error};
 use std::result::Result;
 
 use rand::Rng;
+use queues::{Queue, IsQueue};
 
 use super::block::BlockFace;
 use super::color::{Color, WHITE, RED, BLUE, ORANGE, GREEN, YELLOW, NUM_COLORS, ALL_COLORS};
@@ -49,7 +50,7 @@ fn get_color_rotations(rotation: &Rotation) -> [Option<&'static Color>; NUM_COLO
 
 #[derive(Clone)]
 pub struct RubiksCube<'a> {
-    blocks: [Block<'a>; 20]
+    blocks: Box<[Block<'a>; 20]>
 }
 
 impl <'a> RubiksCube<'a> {
@@ -81,7 +82,51 @@ impl <'a> RubiksCube<'a> {
         }
 
         assert!(idx == 20);
-        Self { blocks: blocks }
+        Self { blocks: Box::new(blocks) }
+    }
+
+    pub fn is_solved(&self) -> bool {
+        self.blocks.iter().all(|block| block.is_solved())
+    }
+
+    pub fn solve(&self) -> Vec<Rotation> {
+        let copy = self.clone();
+
+        let mut queue = Queue::new();
+
+        if !copy.is_solved() {
+            queue.add((copy, Vec::new())).expect("");
+        }
+
+        let mut all_rotations = Vec::new();
+        for color in ALL_COLORS.iter() {
+            all_rotations.push(Rotation { face: color, direction: Direction::Clockwise });
+            all_rotations.push(Rotation { face: color, direction: Direction::CounterClockwise });
+        }
+
+        let mut i = 0;
+        while queue.size() != 0 {
+            i = i + 1;
+            let (next, next_acc) = queue.remove().expect("Underflow");
+            
+            if next.is_solved() {
+                println!("Solve iterated {} times", i);
+                return next_acc;
+            }
+
+            for rotation in all_rotations.iter() {
+                let mut next_copy = next.clone();
+                let mut next_acc_copy = next_acc.clone();
+
+                next_copy.turn(rotation);
+                next_acc_copy.push(rotation.clone());
+                queue.add((next_copy, next_acc_copy)).expect("");
+            }
+        }
+
+        println!("Solve iterated {} times", i);
+
+        Vec::new()
     }
 
     /// Uses the provided Rng to generate random Rotations and executes them on self.
@@ -101,12 +146,10 @@ impl <'a> RubiksCube<'a> {
     pub fn turn(&mut self, rotation: &Rotation) {
         let face = rotation.face;
         let rotations = get_color_rotations(&rotation);
-        for block in self.blocks.iter_mut() {
-            if block.get_face(face) == None {
-                continue;
-            }
 
-            match block {
+        self.blocks.iter_mut()
+            .filter(|block| block.get_face(face) != None)
+            .for_each(|block| match block {
                 Block::Edge(ref mut a, ref mut b) => {
                     a.face = rotations[a.face.idx].unwrap();
                     b.face = rotations[b.face.idx].unwrap();
@@ -115,9 +158,8 @@ impl <'a> RubiksCube<'a> {
                     a.face = rotations[a.face.idx].unwrap();
                     b.face = rotations[b.face.idx].unwrap();
                     c.face = rotations[c.face.idx].unwrap();
-                },
-            }
-        }
+                }
+            });
     }
 
     /// Finds the block that resides between the faces in colors.

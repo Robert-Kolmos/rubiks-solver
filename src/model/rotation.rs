@@ -4,12 +4,13 @@ use rand::Rng;
 
 use super::color::{Color, NUM_COLORS, ALL_COLORS};
 
-#[derive(Eq, PartialEq)]
+#[derive(Eq, PartialEq, Clone)]
 pub enum Direction {
     Clockwise = 0,
     CounterClockwise = 1,
 }
 
+#[derive(Clone)]
 pub struct Rotation {
     pub face: &'static Color,
     pub direction: Direction,
