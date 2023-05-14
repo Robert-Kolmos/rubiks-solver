@@ -33,7 +33,6 @@ const INTERNAL_TO_ROW_MAJOR: [usize; 9] = [0, 1, 2, 5, 8, 7, 6, 3, 4];
 const ROW_MAJOR_TO_INTERNAL: [usize; 9] = [0, 1, 2, 7, 8, 3, 6, 5, 4];
 const SIDE_LEN: usize = 3;
 
-
 const ROTATION_INDEXES: [[(usize, [usize; 3]); 4]; 6] = [
     [ (1, [0, 1, 2]), (2, [0, 1, 2]), (3, [0, 1, 2]), (4, [0, 1, 2]) ],
     [ (0, [0, 6, 7]), (4, [4, 2, 3]), (5, [0, 6, 7]), (2, [0, 6, 7]) ],
@@ -260,6 +259,8 @@ impl BitCube {
     }
 
     pub fn turn(&mut self, face: usize, direction: Direction) {
+        // There is still a lot of room for optimization here, for example if src and dest are using the same
+        // indexes we can directly copy the bits instead of all this looping.
         let mut indexes = ROTATION_INDEXES[face].clone();
         if direction == Direction::CounterClockwise {
             indexes.reverse();

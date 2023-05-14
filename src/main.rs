@@ -19,9 +19,8 @@ fn main() {
 fn test_clone() {
     println!("Benchmarking Clone:");
 
-    let mut bit_cube = BitCube::solved();
-    let mut rubiks_cube = RubiksCube::solved();
-    let mut rng = rand::thread_rng();
+    let bit_cube = BitCube::solved();
+    let rubiks_cube = RubiksCube::solved();
 
     for size in SIZES {
         println!("\n\nTrial {}", size);
